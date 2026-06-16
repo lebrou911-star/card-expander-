@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.1.1";
+const VERSION = "0.2.0";
 
 class ExpanderCard extends HTMLElement {
   constructor() {
@@ -188,6 +188,10 @@ class ExpanderCard extends HTMLElement {
     if (!this._built && this._config) this._build();
   }
 
+  static getConfigElement() {
+    return document.createElement("expander-card-editor");
+  }
+
   static getStubConfig() {
     return {
       "expand-on": "both",
@@ -203,12 +207,181 @@ class ExpanderCard extends HTMLElement {
 
 customElements.define("expander-card", ExpanderCard);
 
+/* ------------------------------------------------------------------ *
+ * Visual editor (Home Assistant GUI)
+ * ------------------------------------------------------------------ */
+
+const EDITOR_SCHEMA = [
+  {
+    name: "expand-on",
+    selector: {
+      select: {
+        mode: "dropdown",
+        options: [
+          { value: "header", label: "Header (tap the header card)" },
+          { value: "chevron", label: "Chevron (tap the arrow)" },
+          { value: "both", label: "Both" },
+        ],
+      },
+    },
+  },
+  { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
+  { name: "expanded", selector: { boolean: {} } },
+  { name: "remember", selector: { boolean: {} } },
+  { name: "storage-id", selector: { text: {} } },
+];
+
+const EDITOR_LABELS = {
+  "expand-on": "Expand on",
+  gap: "Gap between child cards",
+  expanded: "Start expanded",
+  remember: "Remember open/closed state",
+  "storage-id": "Storage id (required for 'remember')",
+};
+
+class ExpanderCardEditor extends HTMLElement {
+  setConfig(config) {
+    this._config = {
+      "expand-on": "both",
+      expanded: false,
+      remember: false,
+      "storage-id": null,
+      gap: 8,
+      ...config,
+    };
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    if (this._form) this._form.hass = hass;
+    if (this._headerEd && "hass" in this._headerEd) this._headerEd.hass = hass;
+    if (this._cardsEd && "hass" in this._cardsEd) this._cardsEd.hass = hass;
+  }
+
+  _formData() {
+    return {
+      "expand-on": this._config["expand-on"],
+      gap: Number(this._config.gap) || 0,
+      expanded: !!this._config.expanded,
+      remember: !!this._config.remember,
+      "storage-id": this._config["storage-id"] || "",
+    };
+  }
+
+  _emit() {
+    this.dispatchEvent(
+      new CustomEvent("config-changed", {
+        detail: { config: this._config },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  _section(title, description) {
+    const el = document.createElement("div");
+    const t = document.createElement("div");
+    t.textContent = title;
+    t.style.fontWeight = "600";
+    t.style.marginBottom = "4px";
+    const d = document.createElement("div");
+    d.textContent = description;
+    d.style.fontSize = "0.85em";
+    d.style.color = "var(--secondary-text-color)";
+    d.style.marginBottom = "8px";
+    el.appendChild(t);
+    el.appendChild(d);
+    return el;
+  }
+
+  // Object/array editor: prefer HA's native ha-yaml-editor, fall back to a JSON textarea.
+  _makeObjectEditor(value, onChange) {
+    if (customElements.get("ha-yaml-editor")) {
+      const ed = document.createElement("ha-yaml-editor");
+      ed.hass = this._hass;
+      ed.defaultValue = value;
+      ed.addEventListener("value-changed", (ev) => {
+        ev.stopPropagation();
+        if (ev.detail.isValid === false) return;
+        onChange(ev.detail.value);
+      });
+      return ed;
+    }
+    const ta = document.createElement("textarea");
+    ta.value = JSON.stringify(value, null, 2);
+    ta.style.width = "100%";
+    ta.style.minHeight = "140px";
+    ta.style.fontFamily = "var(--code-font-family, monospace)";
+    ta.style.boxSizing = "border-box";
+    ta.addEventListener("input", () => {
+      try {
+        onChange(JSON.parse(ta.value));
+      } catch (e) {
+        /* ignore until valid JSON */
+      }
+    });
+    return ta;
+  }
+
+  _render() {
+    if (!this._config) return;
+    if (this._rendered) {
+      if (this._form) this._form.data = this._formData();
+      return;
+    }
+
+    this.innerHTML = "";
+    const root = document.createElement("div");
+    root.style.display = "flex";
+    root.style.flexDirection = "column";
+    root.style.gap = "16px";
+
+    const form = document.createElement("ha-form");
+    form.hass = this._hass;
+    form.data = this._formData();
+    form.schema = EDITOR_SCHEMA;
+    form.computeLabel = (s) => EDITOR_LABELS[s.name] || s.name;
+    form.addEventListener("value-changed", (ev) => {
+      ev.stopPropagation();
+      this._config = { ...this._config, ...ev.detail.value };
+      this._emit();
+    });
+    this._form = form;
+    root.appendChild(form);
+
+    root.appendChild(
+      this._section("Header card", "The always-visible card (YAML).")
+    );
+    this._headerEd = this._makeObjectEditor(this._config.header || {}, (v) => {
+      this._config = { ...this._config, header: v };
+      this._emit();
+    });
+    root.appendChild(this._headerEd);
+
+    root.appendChild(
+      this._section("Child cards", "Cards revealed when expanded — a YAML list.")
+    );
+    this._cardsEd = this._makeObjectEditor(this._config.cards || [], (v) => {
+      this._config = { ...this._config, cards: v };
+      this._emit();
+    });
+    root.appendChild(this._cardsEd);
+
+    this.appendChild(root);
+    this._rendered = true;
+  }
+}
+
+customElements.define("expander-card-editor", ExpanderCardEditor);
+
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "expander-card",
   name: "Expander Card",
   description: "A header card that slides open to reveal child cards underneath.",
-  preview: false,
+  preview: true,
+  documentationURL: "https://github.com/lebrou911-star/card-expander-",
 });
 
 console.info(
