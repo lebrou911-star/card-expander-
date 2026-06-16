@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.9.1";
+const VERSION = "0.10.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -49,6 +49,7 @@ class ExpanderCard extends HTMLElement {
       "header-width": 0,
       breakout: false,
       "breakout-margin": 8,
+      "force-header-toggle": false,
       ...config,
     };
     let initial = !!this._config.expanded;
@@ -163,16 +164,32 @@ class ExpanderCard extends HTMLElement {
     if (headerWidth) headerHolder.style.maxWidth = headerWidth;
     if (expandOn === "header" || expandOn === "both") {
       headerHolder.classList.add("header-clickable");
-      headerHolder.addEventListener("click", (ev) => {
-        const path = ev.composedPath();
-        const interactive = path.some(
-          (n) =>
-            n.nodeName &&
-            /^(HA-SWITCH|HA-SLIDER|INPUT|SELECT|MWC-|HA-ICON-BUTTON)/.test(n.nodeName)
+      if (this._config["force-header-toggle"]) {
+        // Capture-phase + stopPropagation: tapping anywhere on the header
+        // toggles, and the header card's own tap/icon actions never fire — so
+        // you can give the header an icon action (e.g. to show the icon "disk")
+        // without it stealing the tap.
+        headerHolder.addEventListener(
+          "click",
+          (ev) => {
+            ev.stopPropagation();
+            ev.preventDefault();
+            this._toggle();
+          },
+          true
         );
-        if (interactive) return;
-        this._toggle();
-      });
+      } else {
+        headerHolder.addEventListener("click", (ev) => {
+          const path = ev.composedPath();
+          const interactive = path.some(
+            (n) =>
+              n.nodeName &&
+              /^(HA-SWITCH|HA-SLIDER|INPUT|SELECT|MWC-|HA-ICON-BUTTON)/.test(n.nodeName)
+          );
+          if (interactive) return;
+          this._toggle();
+        });
+      }
     }
     headerHolder.appendChild(this._headerEl);
 
@@ -301,6 +318,7 @@ const EDITOR_SCHEMA = [
   { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "breakout", selector: { boolean: {} } },
   { name: "breakout-margin", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
+  { name: "force-header-toggle", selector: { boolean: {} } },
   { name: "expanded", selector: { boolean: {} } },
   { name: "remember", selector: { boolean: {} } },
   { name: "storage-id", selector: { text: {} } },
@@ -313,6 +331,7 @@ const EDITOR_LABELS = {
   gap: "Gap between child cards",
   breakout: "Full-width children (break out of the card)",
   "breakout-margin": "Break-out side margin",
+  "force-header-toggle": "Tap whole header to expand (ignore icon/inner actions)",
   expanded: "Start expanded",
   remember: "Remember open/closed state",
   "storage-id": "Storage id (required for 'remember')",
@@ -402,6 +421,7 @@ class ExpanderCardEditor extends HTMLElement {
       gap: Number(this._config.gap) || 0,
       breakout: !!this._config.breakout,
       "breakout-margin": Number(this._config["breakout-margin"]) || 0,
+      "force-header-toggle": !!this._config["force-header-toggle"],
       expanded: !!this._config.expanded,
       remember: !!this._config.remember,
       "storage-id": this._config["storage-id"] || "",
