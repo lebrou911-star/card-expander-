@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.9.1
+
+- Fix: a double gap appeared under the **collapsed** card. The top spacing
+  (`padding-top`) is now applied only when expanded, so the collapsed children
+  area is truly 0px tall.
+
 ## v0.9.0
 
 - The child-cards editor now **embeds Home Assistant's native stack-card editor**:
