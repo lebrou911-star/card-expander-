@@ -104,7 +104,6 @@ cards:
 | `header-width`| number / string | `0`      | Shrink only the header: `1`–`12` = that many of 12 columns, or a CSS value (`33%`, `200px`). `0` = full width. Children keep the full card width. |
 | `breakout`    | boolean         | `false`  | Let the expanded children span the **full viewport width**, breaking out of the card's grid cell. The header stays inline at its normal size. |
 | `breakout-margin` | number (px) | `8`      | Side margin used when `breakout` is on.                                                      |
-| `force-header-toggle` | boolean | `false`  | With `expand-on: header`/`both`, tap anywhere on the header to expand, ignoring the header card's own tap/icon actions. Lets you keep an `icon_tap_action` (e.g. for a Mushroom icon "disk") without it stealing the tap. |
 | `expanded`    | boolean         | `false`  | Whether the card starts open.                                                                |
 | `remember`    | boolean         | `false`  | Remember the open/closed state in the browser's `localStorage`. Requires `storage-id`.       |
 | `storage-id`  | string          | `null`   | A unique id used as the storage key when `remember` is enabled. Give each card its own id.   |
@@ -113,8 +112,11 @@ cards:
 ### Notes
 
 - `expand-on: header` shows **no chevron** and expands when you tap the header
-  card itself. Interactive header controls (switches, sliders, icon buttons,
-  inputs…) keep working — tapping them will **not** toggle the expander.
+  card. A transparent overlay handles the tap, so the header card stays fully
+  visible (e.g. a Mushroom icon keeps its circular "disk") but its own
+  tap/icon actions don't fire — the whole header is the toggle.
+- `expand-on: both` keeps the header fully normal **and** shows a chevron; both a
+  header tap and the chevron toggle (genuine interactive controls still work).
 - `expand-on: chevron` shows a chevron on the right of the header; only the
   chevron toggles.
 - `expand-on: both` does both (header tap **and** chevron).

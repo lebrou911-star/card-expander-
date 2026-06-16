@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.10.1";
+const VERSION = "0.11.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -49,7 +49,6 @@ class ExpanderCard extends HTMLElement {
       "header-width": 0,
       breakout: false,
       "breakout-margin": 8,
-      "force-header-toggle": false,
       ...config,
     };
     let initial = !!this._config.expanded;
@@ -163,10 +162,15 @@ class ExpanderCard extends HTMLElement {
     headerHolder.className = "header-card";
     const headerWidth = resolveHeaderWidth(this._config["header-width"]);
     if (headerWidth) headerHolder.style.maxWidth = headerWidth;
-    const forceHeaderTap =
-      (expandOn === "header" || expandOn === "both") &&
-      !!this._config["force-header-toggle"];
-    if ((expandOn === "header" || expandOn === "both") && !forceHeaderTap) {
+    // Behaviour (automatic, no option):
+    // - "header" (no chevron): a transparent overlay swallows taps and toggles,
+    //   so the header card (and e.g. a Mushroom icon "disk") stays visible but
+    //   its own tap/icon actions never fire.
+    // - "both": the header also toggles, via a non-blocking handler that still
+    //   lets genuinely interactive controls work; the chevron toggles too.
+    // - "chevron": the header is left fully normal; only the chevron toggles.
+    const useOverlay = expandOn === "header";
+    if (expandOn === "both") {
       headerHolder.classList.add("header-clickable");
       headerHolder.addEventListener("click", (ev) => {
         const path = ev.composedPath();
@@ -195,7 +199,7 @@ class ExpanderCard extends HTMLElement {
       headerHolder.appendChild(chevron);
     }
 
-    if (forceHeaderTap) {
+    if (useOverlay) {
       // Transparent layer on top of the header that swallows the tap and
       // toggles. The header card stays visible (so its icon "disk" shows) but
       // never receives pointer events, so its own tap/icon actions don't fire.
@@ -320,7 +324,6 @@ const EDITOR_SCHEMA = [
   { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "breakout", selector: { boolean: {} } },
   { name: "breakout-margin", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
-  { name: "force-header-toggle", selector: { boolean: {} } },
   { name: "expanded", selector: { boolean: {} } },
   { name: "remember", selector: { boolean: {} } },
   { name: "storage-id", selector: { text: {} } },
@@ -333,7 +336,6 @@ const EDITOR_LABELS = {
   gap: "Gap between child cards",
   breakout: "Full-width children (break out of the card)",
   "breakout-margin": "Break-out side margin",
-  "force-header-toggle": "Tap whole header to expand (ignore icon/inner actions)",
   expanded: "Start expanded",
   remember: "Remember open/closed state",
   "storage-id": "Storage id (required for 'remember')",
@@ -423,7 +425,6 @@ class ExpanderCardEditor extends HTMLElement {
       gap: Number(this._config.gap) || 0,
       breakout: !!this._config.breakout,
       "breakout-margin": Number(this._config["breakout-margin"]) || 0,
-      "force-header-toggle": !!this._config["force-header-toggle"],
       expanded: !!this._config.expanded,
       remember: !!this._config.remember,
       "storage-id": this._config["storage-id"] || "",

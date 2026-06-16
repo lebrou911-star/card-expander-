@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.11.0
+
+- Removed the `force-header-toggle` option — the behaviour is now automatic:
+  - `expand-on: header` (no chevron): a transparent overlay handles the tap, so
+    the header (and its icon "disk") shows but its own tap/icon actions never
+    fire.
+  - `expand-on: chevron`: the header is left fully normal; only the chevron
+    toggles.
+  - `expand-on: both`: the chevron toggles and the header also toggles (genuine
+    interactive controls still work).
+
 ## v0.10.1
 
 - Fix `force-header-toggle`: a capture-phase click listener didn't stop the
