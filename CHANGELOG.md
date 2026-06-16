@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.9.0
+
+- The child-cards editor now **embeds Home Assistant's native stack-card editor**:
+  numbered tabs per card, **add (+)**, move, **duplicate**, **cut**, delete, and
+  the **"Stack horizontally"** toggle — exactly like editing a built-in
+  horizontal/vertical stack. The orientation toggle maps to `child-layout`.
+- Removed the now-redundant `child-layout` dropdown from the options form (it is
+  controlled by the stack editor's toggle). The `child-layout` config key still
+  works.
+
 ## v0.8.0
 
 - The child-cards editor now reliably behaves like the **horizontal/vertical

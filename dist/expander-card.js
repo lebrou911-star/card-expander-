@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.8.0";
+const VERSION = "0.9.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -292,18 +292,6 @@ const EDITOR_SCHEMA = [
       },
     },
   },
-  {
-    name: "child-layout",
-    selector: {
-      select: {
-        mode: "dropdown",
-        options: [
-          { value: "vertical", label: "Vertical (stacked below)" },
-          { value: "horizontal", label: "Horizontal (side by side)" },
-        ],
-      },
-    },
-  },
   { name: "columns", selector: { number: { min: 0, max: 12, mode: "box" } } },
   { name: "header-width", selector: { number: { min: 0, max: 12, mode: "box" } } },
   { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
@@ -316,7 +304,6 @@ const EDITOR_SCHEMA = [
 
 const EDITOR_LABELS = {
   "expand-on": "Expand on",
-  "child-layout": "Child cards layout",
   columns: "Columns (0 = auto)",
   "header-width": "Header width (cols, 0 = full)",
   gap: "Gap between child cards",
@@ -356,7 +343,7 @@ class ExpanderCardEditor extends HTMLElement {
   // HA. Force their import (via a built-in stack's editor) so the children get a
   // real stack-like GUI (add / remove / pick type) instead of the YAML fallback.
   async _ensureNativeEditors() {
-    const need = ["hui-card-element-editor", "hui-card-picker"];
+    const need = ["hui-stack-card-editor", "hui-card-element-editor", "hui-card-picker"];
     if (need.every((n) => customElements.get(n))) return;
     try {
       const helpers = await window.loadCardHelpers();
@@ -370,7 +357,10 @@ class ExpanderCardEditor extends HTMLElement {
       Promise.all(need.map((n) => customElements.whenDefined(n))),
       new Promise((r) => setTimeout(r, 2000)),
     ]);
-    if (customElements.get("hui-card-element-editor") && !this._upgraded) {
+    const ready =
+      customElements.get("hui-stack-card-editor") ||
+      customElements.get("hui-card-element-editor");
+    if (ready && !this._upgraded) {
       this._upgraded = true;
       this._rendered = false;
       this._render(); // re-render now that native editors exist
@@ -391,7 +381,7 @@ class ExpanderCardEditor extends HTMLElement {
   }
 
   _propagate(prop, value) {
-    [this._headerEd, this._picker, ...(this._listEds || [])].forEach((el) => {
+    [this._headerEd, this._picker, this._stackEd, ...(this._listEds || [])].forEach((el) => {
       if (el && prop in el) el[prop] = value;
     });
   }
@@ -403,7 +393,6 @@ class ExpanderCardEditor extends HTMLElement {
   _formData() {
     return {
       "expand-on": this._config["expand-on"],
-      "child-layout": this._config["child-layout"] || "vertical",
       columns: Number(this._config.columns) || 0,
       "header-width": Number(this._config["header-width"]) || 0,
       gap: Number(this._config.gap) || 0,
@@ -551,7 +540,36 @@ class ExpanderCardEditor extends HTMLElement {
   _renderCardsList() {
     const cards = Array.isArray(this._config.cards) ? this._config.cards : [];
     this._listEds = [];
+    this._stackEd = null;
     this._cardsContainer.innerHTML = "";
+
+    // Best UI: reuse HA's native stack-card editor — tabs, add (+), move,
+    // duplicate, delete, and the "Stack horizontally" toggle. We feed it a
+    // vertical/horizontal-stack config and read the cards (and orientation)
+    // back out.
+    if (customElements.get("hui-stack-card-editor")) {
+      const horizontal = this._config["child-layout"] === "horizontal";
+      const ed = document.createElement("hui-stack-card-editor");
+      ed.hass = this._hass;
+      ed.lovelace = this._lovelace;
+      ed.setConfig({
+        type: horizontal ? "horizontal-stack" : "vertical-stack",
+        cards: this._config.cards || [],
+      });
+      ed.addEventListener("config-changed", (ev) => {
+        ev.stopPropagation();
+        const cfg = ev.detail.config || {};
+        this._config = {
+          ...this._config,
+          cards: Array.isArray(cfg.cards) ? cfg.cards : [],
+          "child-layout": cfg.type === "horizontal-stack" ? "horizontal" : "vertical",
+        };
+        this._emit();
+      });
+      this._stackEd = ed;
+      this._cardsContainer.appendChild(ed);
+      return;
+    }
 
     // Fallback: a single YAML editor for the whole list.
     if (!this._hasNativeEditor) {
