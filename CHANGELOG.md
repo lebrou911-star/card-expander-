@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.14.1
+
+- Fix: with `breakout`, the expanded full-width children could be overlapped by
+  neighbouring cards in a sections grid, which then swallowed taps (so toggling
+  e.g. lights "worked badly"). The broken-out children are now lifted above
+  (`position: relative; z-index`) so they reliably receive pointer events.
+
 ## v0.14.0
 
 - The header editor now has a **`{}` YAML toggle**: edit the header card as YAML,
