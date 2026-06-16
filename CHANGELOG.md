@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.0
+
+- New `columns` option (0–12): arrange the child cards in a grid with a fixed
+  number of columns (wrapping to new rows as needed). `0` keeps the automatic
+  behaviour (vertical stack, or a single row when `child-layout: horizontal`).
+  When `columns >= 1` it takes precedence over `child-layout`. Available in the
+  visual editor.
+
 ## v0.4.0
 
 - The chevron now sits **on top of** the header card (overlay) instead of taking

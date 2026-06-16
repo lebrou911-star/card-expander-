@@ -98,6 +98,7 @@ cards:
 | `cards`       | list of cards   | —        | **Required.** The child cards revealed when expanded.                                        |
 | `expand-on`   | string          | `both`   | What toggles the card: `header`, `chevron`, or `both`.                                       |
 | `child-layout`| string          | `vertical` | How child cards are arranged: `vertical` (stacked below) or `horizontal` (side by side).   |
+| `columns`     | number          | `0`      | Arrange child cards in a grid of N columns (1–12). `0` = auto (follows `child-layout`). Wins over `child-layout` when ≥ 1. |
 | `expanded`    | boolean         | `false`  | Whether the card starts open.                                                                |
 | `remember`    | boolean         | `false`  | Remember the open/closed state in the browser's `localStorage`. Requires `storage-id`.       |
 | `storage-id`  | string          | `null`   | A unique id used as the storage key when `remember` is enabled. Give each card its own id.   |
@@ -115,6 +116,9 @@ cards:
   card keeps the same width as any neighbouring card in a grid.
 - `child-layout: horizontal` lays the child cards out in a row (wrapping to new
   rows as needed); `gap` then controls both horizontal and vertical spacing.
+- `columns: N` (1–12) arranges the child cards in a grid of exactly N equal
+  columns, wrapping onto more rows as needed — e.g. `columns: 3` shows three per
+  row. It overrides `child-layout` when set to 1 or more.
 - `remember` only persists if you also set a `storage-id`. The state is stored
   per-browser under the key `expander-card:<storage-id>`.
 
