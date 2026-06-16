@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.13.0";
+const VERSION = "0.13.1";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -548,7 +548,18 @@ class ExpanderCardEditor extends HTMLElement {
     c.innerHTML = "";
     const h = this._config.header;
     if (h && h.type) {
-      // A card is chosen: show its editor (GUI/YAML toggle).
+      // A card is chosen: show a delete button + its editor (GUI/YAML toggle).
+      const bar = document.createElement("div");
+      bar.style.display = "flex";
+      bar.style.justifyContent = "flex-end";
+      bar.appendChild(
+        this._iconButton(MDI_DELETE, "Remove header card", false, () => {
+          this._config = { ...this._config, header: {} };
+          this._emit();
+          this._renderHeaderEditor();
+        })
+      );
+      c.appendChild(bar);
       this._headerEd = this._makeCardEditor(h, (v) => {
         this._config = { ...this._config, header: v };
         this._emit();

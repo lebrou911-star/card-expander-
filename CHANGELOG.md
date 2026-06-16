@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.13.1
+
+- Added a delete (trash) button on the header card in the editor — removing it
+  brings back the card picker so you can choose a different header.
+
 ## v0.13.0
 
 - The **header** now has a card **picker** in the editor (like the child cards):
