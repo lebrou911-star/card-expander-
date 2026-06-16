@@ -18,7 +18,6 @@ rarely-used cards behind a single tap.
 - Use **any** Home Assistant card as the header.
 - Reveal **any** number of child cards with a slide-down animation.
 - Choose what triggers the toggle: the **header**, a **chevron**, or **both**.
-- Optionally **remember** the open/closed state across reloads (per card).
 - Configurable spacing between child cards.
 - No build step, no dependencies — a single `.js` file.
 
@@ -63,8 +62,8 @@ Browsers cache Lovelace resources aggressively. After installing or updating:
 The card ships with a full **visual editor**. Edit your dashboard → **Add Card**
 → find **Expander Card** in the picker (with a live preview). The GUI lets you:
 
-- set `expand-on`, `gap`, `expanded`, `remember` and `storage-id` with form
-  controls;
+- set `expand-on`, `gap`, `expanded`, `columns`, `header-width`, `breakout`…
+  with form controls;
 - edit the **header card** with its own graphical editor (GUI/YAML toggle);
 - edit the **child cards** with Home Assistant's native stack-card editor —
   numbered tabs, **add (+)**, move, **duplicate**, **cut**, delete, and a
@@ -105,8 +104,6 @@ cards:
 | `breakout`    | boolean         | `false`  | Let the expanded children span the **full viewport width**, breaking out of the card's grid cell. The header stays inline at its normal size. |
 | `breakout-margin` | number (px) | `8`      | Side margin used when `breakout` is on.                                                      |
 | `expanded`    | boolean         | `false`  | Whether the card starts open.                                                                |
-| `remember`    | boolean         | `false`  | Remember the open/closed state in the browser's `localStorage`. Requires `storage-id`.       |
-| `storage-id`  | string          | `null`   | A unique id used as the storage key when `remember` is enabled. Give each card its own id.   |
 | `gap`         | number (px)     | `8`      | Vertical space (in pixels) between child cards.                                              |
 
 ### Notes
@@ -137,8 +134,6 @@ cards:
   children will still span the full viewport width (combine with `columns: 3` for
   a wide three-column panel). The children float out below the header and push
   the content underneath down.
-- `remember` only persists if you also set a `storage-id`. The state is stored
-  per-browser under the key `expander-card:<storage-id>`.
 
 ---
 
@@ -152,8 +147,6 @@ prompt.
 ```yaml
 type: custom:expander-card
 expand-on: both
-remember: true
-storage-id: lock-menu
 gap: 8
 header:
   type: custom:mushroom-template-card

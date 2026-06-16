@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.11.0";
+const VERSION = "0.12.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -41,8 +41,6 @@ class ExpanderCard extends HTMLElement {
     this._config = {
       "expand-on": "both",
       expanded: false,
-      remember: false,
-      "storage-id": null,
       gap: 8,
       "child-layout": "vertical",
       columns: 0,
@@ -51,13 +49,7 @@ class ExpanderCard extends HTMLElement {
       "breakout-margin": 8,
       ...config,
     };
-    let initial = !!this._config.expanded;
-    if (this._config.remember) {
-      const key = this._storageKey();
-      const saved = key ? window.localStorage.getItem(key) : null;
-      if (saved !== null) initial = saved === "1";
-    }
-    this._expanded = initial;
+    this._expanded = !!this._config.expanded;
     this._built = false;
     if (this.shadowRoot) this._build();
   }
@@ -76,11 +68,6 @@ class ExpanderCard extends HTMLElement {
       });
     }
     return size;
-  }
-
-  _storageKey() {
-    const id = this._config["storage-id"];
-    return id ? `expander-card:${id}` : null;
   }
 
   async _createCardElement(cardConfig) {
@@ -264,10 +251,6 @@ class ExpanderCard extends HTMLElement {
     this._expanded = !this._expanded;
     if (this._childrenEl) this._childrenEl.classList.toggle("open", this._expanded);
     if (this._chevronEl) this._chevronEl.classList.toggle("open", this._expanded);
-    if (this._config.remember) {
-      const key = this._storageKey();
-      if (key) window.localStorage.setItem(key, this._expanded ? "1" : "0");
-    }
     requestAnimationFrame(() => this._applyBreakout());
     this.dispatchEvent(new Event("iron-resize", { bubbles: true, composed: true }));
   }
@@ -325,8 +308,6 @@ const EDITOR_SCHEMA = [
   { name: "breakout", selector: { boolean: {} } },
   { name: "breakout-margin", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "expanded", selector: { boolean: {} } },
-  { name: "remember", selector: { boolean: {} } },
-  { name: "storage-id", selector: { text: {} } },
 ];
 
 const EDITOR_LABELS = {
@@ -337,8 +318,6 @@ const EDITOR_LABELS = {
   breakout: "Full-width children (break out of the card)",
   "breakout-margin": "Break-out side margin",
   expanded: "Start expanded",
-  remember: "Remember open/closed state",
-  "storage-id": "Storage id (required for 'remember')",
 };
 
 const MDI_DELETE =
@@ -356,8 +335,6 @@ class ExpanderCardEditor extends HTMLElement {
     this._config = {
       "expand-on": "both",
       expanded: false,
-      remember: false,
-      "storage-id": null,
       gap: 8,
       "child-layout": "vertical",
       ...config,
@@ -426,8 +403,6 @@ class ExpanderCardEditor extends HTMLElement {
       breakout: !!this._config.breakout,
       "breakout-margin": Number(this._config["breakout-margin"]) || 0,
       expanded: !!this._config.expanded,
-      remember: !!this._config.remember,
-      "storage-id": this._config["storage-id"] || "",
     };
   }
 
