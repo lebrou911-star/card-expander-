@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.0
+
+- New `header-width` option: shrink the **header** to a fraction of the card
+  width (1–12 columns, or a CSS value like `33%` / `200px`) while the expanded
+  **child cards keep the full card width**. Useful in *sections* views to get a
+  compact header with a wide, multi-column expanded area (set the card itself to
+  full width, then `header-width: 4`). `0` = full width (default).
+- The chevron now follows the header's right edge even when the header is
+  narrower than the card.
+
 ## v0.5.0
 
 - New `columns` option (0–12): arrange the child cards in a grid with a fixed

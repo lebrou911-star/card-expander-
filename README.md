@@ -99,6 +99,7 @@ cards:
 | `expand-on`   | string          | `both`   | What toggles the card: `header`, `chevron`, or `both`.                                       |
 | `child-layout`| string          | `vertical` | How child cards are arranged: `vertical` (stacked below) or `horizontal` (side by side).   |
 | `columns`     | number          | `0`      | Arrange child cards in a grid of N columns (1–12). `0` = auto (follows `child-layout`). Wins over `child-layout` when ≥ 1. |
+| `header-width`| number / string | `0`      | Shrink only the header: `1`–`12` = that many of 12 columns, or a CSS value (`33%`, `200px`). `0` = full width. Children keep the full card width. |
 | `expanded`    | boolean         | `false`  | Whether the card starts open.                                                                |
 | `remember`    | boolean         | `false`  | Remember the open/closed state in the browser's `localStorage`. Requires `storage-id`.       |
 | `storage-id`  | string          | `null`   | A unique id used as the storage key when `remember` is enabled. Give each card its own id.   |
@@ -119,6 +120,11 @@ cards:
 - `columns: N` (1–12) arranges the child cards in a grid of exactly N equal
   columns, wrapping onto more rows as needed — e.g. `columns: 3` shows three per
   row. It overrides `child-layout` when set to 1 or more.
+- `header-width` keeps the **header compact while the children stay full width**.
+  In a *sections* view a card has a single width, so to get a small header with a
+  wide multi-column expanded area: set the card itself to full width (its HA
+  *Layout → Columns* = 12), then e.g. `header-width: 4` (header = 1/3) and
+  `columns: 3` (children in three columns across the full width).
 - `remember` only persists if you also set a `storage-id`. The state is stored
   per-browser under the key `expander-card:<storage-id>`.
 
