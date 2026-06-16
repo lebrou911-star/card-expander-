@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.10.0";
+const VERSION = "0.10.1";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -129,6 +129,7 @@ class ExpanderCard extends HTMLElement {
       .chevron.open { transform: rotate(180deg); }
       .chevron:hover { color: var(--primary-text-color); }
       .header-clickable { cursor: pointer; }
+      .header-tap-overlay { position: absolute; inset: 0; z-index: 3; cursor: pointer; }
       .children {
         display: grid; grid-template-rows: 0fr;
         transition: grid-template-rows 0.3s ease; overflow: hidden;
@@ -162,34 +163,21 @@ class ExpanderCard extends HTMLElement {
     headerHolder.className = "header-card";
     const headerWidth = resolveHeaderWidth(this._config["header-width"]);
     if (headerWidth) headerHolder.style.maxWidth = headerWidth;
-    if (expandOn === "header" || expandOn === "both") {
+    const forceHeaderTap =
+      (expandOn === "header" || expandOn === "both") &&
+      !!this._config["force-header-toggle"];
+    if ((expandOn === "header" || expandOn === "both") && !forceHeaderTap) {
       headerHolder.classList.add("header-clickable");
-      if (this._config["force-header-toggle"]) {
-        // Capture-phase + stopPropagation: tapping anywhere on the header
-        // toggles, and the header card's own tap/icon actions never fire — so
-        // you can give the header an icon action (e.g. to show the icon "disk")
-        // without it stealing the tap.
-        headerHolder.addEventListener(
-          "click",
-          (ev) => {
-            ev.stopPropagation();
-            ev.preventDefault();
-            this._toggle();
-          },
-          true
+      headerHolder.addEventListener("click", (ev) => {
+        const path = ev.composedPath();
+        const interactive = path.some(
+          (n) =>
+            n.nodeName &&
+            /^(HA-SWITCH|HA-SLIDER|INPUT|SELECT|MWC-|HA-ICON-BUTTON)/.test(n.nodeName)
         );
-      } else {
-        headerHolder.addEventListener("click", (ev) => {
-          const path = ev.composedPath();
-          const interactive = path.some(
-            (n) =>
-              n.nodeName &&
-              /^(HA-SWITCH|HA-SLIDER|INPUT|SELECT|MWC-|HA-ICON-BUTTON)/.test(n.nodeName)
-          );
-          if (interactive) return;
-          this._toggle();
-        });
-      }
+        if (interactive) return;
+        this._toggle();
+      });
     }
     headerHolder.appendChild(this._headerEl);
 
@@ -205,6 +193,20 @@ class ExpanderCard extends HTMLElement {
       // Inside the header holder so it stays at the header's right edge even
       // when the header is narrower than the full card width.
       headerHolder.appendChild(chevron);
+    }
+
+    if (forceHeaderTap) {
+      // Transparent layer on top of the header that swallows the tap and
+      // toggles. The header card stays visible (so its icon "disk" shows) but
+      // never receives pointer events, so its own tap/icon actions don't fire.
+      headerHolder.classList.add("header-clickable");
+      const overlay = document.createElement("div");
+      overlay.className = "header-tap-overlay";
+      overlay.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        this._toggle();
+      });
+      headerHolder.appendChild(overlay);
     }
     headerRow.appendChild(headerHolder);
     wrapper.appendChild(headerRow);

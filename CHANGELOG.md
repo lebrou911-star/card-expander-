@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.10.1
+
+- Fix `force-header-toggle`: a capture-phase click listener didn't stop the
+  header card's own action (Mushroom fires it on pointer events, not click), so
+  e.g. `more-info` still opened. It now uses a transparent overlay on top of the
+  header that swallows the tap — the header (and its icon "disk") stays visible
+  but never receives pointer events, so its tap/icon actions never fire.
+
 ## v0.10.0
 
 - New `force-header-toggle` option. With `expand-on: header`/`both`, tapping
