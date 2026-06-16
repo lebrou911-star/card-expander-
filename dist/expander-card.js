@@ -2,7 +2,24 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.5.0";
+const VERSION = "0.6.0";
+
+// Resolve a header-width value into a CSS max-width.
+// 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
+function resolveHeaderWidth(v) {
+  if (v == null || v === "" || v === 0 || v === "0") return null;
+  if (typeof v === "number") {
+    if (v >= 1 && v <= 12) return `calc(${v} / 12 * 100%)`;
+    return `${v}px`;
+  }
+  const s = String(v).trim();
+  if (/^\d+$/.test(s)) {
+    const n = Number(s);
+    if (n >= 1 && n <= 12) return `calc(${n} / 12 * 100%)`;
+    return `${n}px`;
+  }
+  return s;
+}
 
 class ExpanderCard extends HTMLElement {
   constructor() {
@@ -28,6 +45,7 @@ class ExpanderCard extends HTMLElement {
       gap: 8,
       "child-layout": "vertical",
       columns: 0,
+      "header-width": 0,
       ...config,
     };
     let initial = !!this._config.expanded;
@@ -95,7 +113,7 @@ class ExpanderCard extends HTMLElement {
       :host { display: block; }
       .wrapper { position: relative; }
       .header-row { position: relative; }
-      .header-card { width: 100%; }
+      .header-card { position: relative; width: 100%; }
       /* The chevron sits on top of the header card (absolute), so the header
          card keeps the exact same size as any other card. */
       .chevron {
@@ -134,6 +152,8 @@ class ExpanderCard extends HTMLElement {
     this._headerEl = await this._createCardElement(this._config.header);
     const headerHolder = document.createElement("div");
     headerHolder.className = "header-card";
+    const headerWidth = resolveHeaderWidth(this._config["header-width"]);
+    if (headerWidth) headerHolder.style.maxWidth = headerWidth;
     if (expandOn === "header" || expandOn === "both") {
       headerHolder.classList.add("header-clickable");
       headerHolder.addEventListener("click", (ev) => {
@@ -148,7 +168,6 @@ class ExpanderCard extends HTMLElement {
       });
     }
     headerHolder.appendChild(this._headerEl);
-    headerRow.appendChild(headerHolder);
 
     if (showChevron) {
       const chevron = document.createElement("div");
@@ -159,8 +178,11 @@ class ExpanderCard extends HTMLElement {
         this._toggle();
       });
       this._chevronEl = chevron;
-      headerRow.appendChild(chevron);
+      // Inside the header holder so it stays at the header's right edge even
+      // when the header is narrower than the full card width.
+      headerHolder.appendChild(chevron);
     }
+    headerRow.appendChild(headerHolder);
     wrapper.appendChild(headerRow);
 
     const children = document.createElement("div");
@@ -256,6 +278,7 @@ const EDITOR_SCHEMA = [
     },
   },
   { name: "columns", selector: { number: { min: 0, max: 12, mode: "box" } } },
+  { name: "header-width", selector: { number: { min: 0, max: 12, mode: "box" } } },
   { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "expanded", selector: { boolean: {} } },
   { name: "remember", selector: { boolean: {} } },
@@ -266,6 +289,7 @@ const EDITOR_LABELS = {
   "expand-on": "Expand on",
   "child-layout": "Child cards layout",
   columns: "Columns (0 = auto)",
+  "header-width": "Header width (cols, 0 = full)",
   gap: "Gap between child cards",
   expanded: "Start expanded",
   remember: "Remember open/closed state",
@@ -324,6 +348,7 @@ class ExpanderCardEditor extends HTMLElement {
       "expand-on": this._config["expand-on"],
       "child-layout": this._config["child-layout"] || "vertical",
       columns: Number(this._config.columns) || 0,
+      "header-width": Number(this._config["header-width"]) || 0,
       gap: Number(this._config.gap) || 0,
       expanded: !!this._config.expanded,
       remember: !!this._config.remember,
