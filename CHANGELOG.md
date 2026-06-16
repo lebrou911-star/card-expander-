@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.10.0
+
+- New `force-header-toggle` option. With `expand-on: header`/`both`, tapping
+  anywhere on the header expands the card **even over the icon/inner actions**
+  (handled in the capture phase). This lets you give the header card an
+  `icon_tap_action` (e.g. so a Mushroom icon shows its circular "disk") without
+  that action stealing the tap from the expander.
+
 ## v0.9.1
 
 - Fix: a double gap appeared under the **collapsed** card. The top spacing
