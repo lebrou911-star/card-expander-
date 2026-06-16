@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.9.0";
+const VERSION = "0.9.1";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -135,8 +135,12 @@ class ExpanderCard extends HTMLElement {
       .children.open { grid-template-rows: 1fr; }
       .children-inner {
         min-height: 0; overflow: hidden; display: flex; flex-direction: column;
-        gap: ${gap}px; padding-top: ${gap}px;
+        gap: ${gap}px;
       }
+      /* Top spacing only when open, so the collapsed area is truly 0px
+         (a padding-top here would keep the inner from shrinking to zero and
+         add an extra gap under the collapsed card). */
+      .children.open .children-inner { padding-top: ${gap}px; }
       .children-inner.horizontal { flex-direction: row; flex-wrap: wrap; align-items: stretch; }
       .children-inner.horizontal > * { flex: 1 1 0; min-width: 0; }
       .children-inner.grid { display: grid; }
