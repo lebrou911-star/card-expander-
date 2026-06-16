@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.13.1";
+const VERSION = "0.14.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -330,6 +330,8 @@ const MDI_DELETE =
   "M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z";
 const MDI_ARROW_UP = "M13,20H11V8L5.5,13.5L4.08,12.08L12,4.16L19.92,12.08L18.5,13.5L13,8V20Z";
 const MDI_ARROW_DOWN = "M11,4H13V16L18.5,10.5L19.92,11.92L12,19.84L4.08,11.92L5.5,10.5L11,16V4Z";
+const MDI_CODE_BRACES =
+  "M8,3A2,2 0 0,0 6,5V9A2,2 0 0,1 4,11H3V13H4A2,2 0 0,1 6,15V19A2,2 0 0,0 8,21H10V19H8V14A2,2 0 0,0 6,12A2,2 0 0,0 8,10V5H10V3M16,3A2,2 0 0,1 18,5V9A2,2 0 0,0 20,11H21V13H20A2,2 0 0,1 18,15V19A2,2 0 0,1 16,21H14V19H16V14A2,2 0 0,1 18,12A2,2 0 0,1 16,10V5H14V3H16Z";
 
 class ExpanderCardEditor extends HTMLElement {
   constructor() {
@@ -547,19 +549,47 @@ class ExpanderCardEditor extends HTMLElement {
     const c = this._headerContainer;
     c.innerHTML = "";
     const h = this._config.header;
-    if (h && h.type) {
-      // A card is chosen: show a delete button + its editor (GUI/YAML toggle).
-      const bar = document.createElement("div");
-      bar.style.display = "flex";
-      bar.style.justifyContent = "flex-end";
+    const hasCard = !!(h && h.type);
+
+    // Toolbar: YAML toggle (always) + delete (when a card is set).
+    const bar = document.createElement("div");
+    bar.style.display = "flex";
+    bar.style.justifyContent = "flex-end";
+    bar.style.gap = "4px";
+    bar.appendChild(
+      this._iconButton(
+        MDI_CODE_BRACES,
+        this._headerYaml ? "Edit in the visual editor" : "Edit in YAML",
+        false,
+        () => {
+          this._headerYaml = !this._headerYaml;
+          this._renderHeaderEditor();
+        }
+      )
+    );
+    if (hasCard) {
       bar.appendChild(
         this._iconButton(MDI_DELETE, "Remove header card", false, () => {
           this._config = { ...this._config, header: {} };
           this._emit();
+          this._headerYaml = false;
           this._renderHeaderEditor();
         })
       );
-      c.appendChild(bar);
+    }
+    c.appendChild(bar);
+
+    // YAML mode: edit the header config directly (works even when empty).
+    if (this._headerYaml) {
+      this._headerEd = this._makeObjectEditor(this._config.header || {}, (v) => {
+        this._config = { ...this._config, header: v };
+        this._emit();
+      });
+      c.appendChild(this._headerEd);
+      return;
+    }
+
+    if (hasCard) {
       this._headerEd = this._makeCardEditor(h, (v) => {
         this._config = { ...this._config, header: v };
         this._emit();
