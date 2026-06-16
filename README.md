@@ -60,10 +60,16 @@ Browsers cache Lovelace resources aggressively. After installing or updating:
 
 ## Usage
 
-The card ships with a **visual editor**. Edit your dashboard → **Add Card** →
-find **Expander Card** in the picker (with a live preview). The GUI lets you set
-`expand-on`, `gap`, `expanded`, `remember` and `storage-id` with form controls,
-and edit the `header` and child `cards` as YAML.
+The card ships with a full **visual editor**. Edit your dashboard → **Add Card**
+→ find **Expander Card** in the picker (with a live preview). The GUI lets you:
+
+- set `expand-on`, `gap`, `expanded`, `remember` and `storage-id` with form
+  controls;
+- edit the **header card** with its own graphical editor (GUI/YAML toggle);
+- **add** child cards via the card picker, edit each one graphically, and
+  **reorder** or **delete** them.
+
+(On older Home Assistant versions, `header`/`cards` fall back to a YAML editor.)
 
 You can also configure it purely in YAML (**Add Card → Manual**). Minimal
 example:
