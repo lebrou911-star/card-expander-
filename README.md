@@ -100,6 +100,8 @@ cards:
 | `child-layout`| string          | `vertical` | How child cards are arranged: `vertical` (stacked below) or `horizontal` (side by side).   |
 | `columns`     | number          | `0`      | Arrange child cards in a grid of N columns (1–12). `0` = auto (follows `child-layout`). Wins over `child-layout` when ≥ 1. |
 | `header-width`| number / string | `0`      | Shrink only the header: `1`–`12` = that many of 12 columns, or a CSS value (`33%`, `200px`). `0` = full width. Children keep the full card width. |
+| `breakout`    | boolean         | `false`  | Let the expanded children span the **full viewport width**, breaking out of the card's grid cell. The header stays inline at its normal size. |
+| `breakout-margin` | number (px) | `8`      | Side margin used when `breakout` is on.                                                      |
 | `expanded`    | boolean         | `false`  | Whether the card starts open.                                                                |
 | `remember`    | boolean         | `false`  | Remember the open/closed state in the browser's `localStorage`. Requires `storage-id`.       |
 | `storage-id`  | string          | `null`   | A unique id used as the storage key when `remember` is enabled. Give each card its own id.   |
@@ -125,6 +127,11 @@ cards:
   wide multi-column expanded area: set the card itself to full width (its HA
   *Layout → Columns* = 12), then e.g. `header-width: 4` (header = 1/3) and
   `columns: 3` (children in three columns across the full width).
+- `breakout: true` is the **best of both** in a *sections* view: keep the card at
+  its small size so it stays inline next to its neighbours, and the expanded
+  children will still span the full viewport width (combine with `columns: 3` for
+  a wide three-column panel). The children float out below the header and push
+  the content underneath down.
 - `remember` only persists if you also set a `storage-id`. The state is stored
   per-browser under the key `expander-card:<storage-id>`.
 

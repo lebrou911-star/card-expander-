@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.6.0";
+const VERSION = "0.7.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -29,6 +29,7 @@ class ExpanderCard extends HTMLElement {
     this._headerEl = null;
     this._childEls = [];
     this._built = false;
+    this._onResize = () => this._applyBreakout();
   }
 
   setConfig(config) {
@@ -46,6 +47,8 @@ class ExpanderCard extends HTMLElement {
       "child-layout": "vertical",
       columns: 0,
       "header-width": 0,
+      breakout: false,
+      "breakout-margin": 8,
       ...config,
     };
     let initial = !!this._config.expanded;
@@ -211,6 +214,23 @@ class ExpanderCard extends HTMLElement {
     this.shadowRoot.innerHTML = "";
     this.shadowRoot.appendChild(style);
     this.shadowRoot.appendChild(wrapper);
+    requestAnimationFrame(() => this._applyBreakout());
+  }
+
+  // Let the expanded children break out of the card's grid cell and span the
+  // full viewport width, while the header stays inline at its normal width.
+  _applyBreakout() {
+    if (!this._childrenEl) return;
+    if (!this._config || !this._config.breakout) {
+      this._childrenEl.style.width = "";
+      this._childrenEl.style.marginLeft = "";
+      return;
+    }
+    const margin = Number(this._config["breakout-margin"]) || 0;
+    const rect = this.getBoundingClientRect();
+    if (!rect.width) return;
+    this._childrenEl.style.width = `calc(100vw - ${margin * 2}px)`;
+    this._childrenEl.style.marginLeft = `${-(rect.left - margin)}px`;
   }
 
   _toggle() {
@@ -221,11 +241,18 @@ class ExpanderCard extends HTMLElement {
       const key = this._storageKey();
       if (key) window.localStorage.setItem(key, this._expanded ? "1" : "0");
     }
+    requestAnimationFrame(() => this._applyBreakout());
     this.dispatchEvent(new Event("iron-resize", { bubbles: true, composed: true }));
   }
 
   connectedCallback() {
     if (!this._built && this._config) this._build();
+    window.addEventListener("resize", this._onResize);
+    requestAnimationFrame(() => this._applyBreakout());
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener("resize", this._onResize);
   }
 
   static getConfigElement() {
@@ -280,6 +307,8 @@ const EDITOR_SCHEMA = [
   { name: "columns", selector: { number: { min: 0, max: 12, mode: "box" } } },
   { name: "header-width", selector: { number: { min: 0, max: 12, mode: "box" } } },
   { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
+  { name: "breakout", selector: { boolean: {} } },
+  { name: "breakout-margin", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "expanded", selector: { boolean: {} } },
   { name: "remember", selector: { boolean: {} } },
   { name: "storage-id", selector: { text: {} } },
@@ -291,6 +320,8 @@ const EDITOR_LABELS = {
   columns: "Columns (0 = auto)",
   "header-width": "Header width (cols, 0 = full)",
   gap: "Gap between child cards",
+  breakout: "Full-width children (break out of the card)",
+  "breakout-margin": "Break-out side margin",
   expanded: "Start expanded",
   remember: "Remember open/closed state",
   "storage-id": "Storage id (required for 'remember')",
@@ -350,6 +381,8 @@ class ExpanderCardEditor extends HTMLElement {
       columns: Number(this._config.columns) || 0,
       "header-width": Number(this._config["header-width"]) || 0,
       gap: Number(this._config.gap) || 0,
+      breakout: !!this._config.breakout,
+      "breakout-margin": Number(this._config["breakout-margin"]) || 0,
       expanded: !!this._config.expanded,
       remember: !!this._config.remember,
       "storage-id": this._config["storage-id"] || "",
