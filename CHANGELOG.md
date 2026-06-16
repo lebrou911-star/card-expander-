@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.8.0
+
+- The child-cards editor now reliably behaves like the **horizontal/vertical
+  stack** editor: HA's native nested card editors (`hui-card-element-editor`) and
+  the card picker (`hui-card-picker`) are now force-loaded, so you get a real GUI
+  to **add, remove, reorder and pick the type** of each child card (instead of
+  falling back to YAML). A simple "Add card" button is used if the picker can't
+  be loaded.
+- Clearer `expand-on` labels — `header` is now described as
+  "Header only — tap the card, no chevron", which is the option to expand by
+  tapping the header with no chevron shown.
+
 ## v0.7.0
 
 - New `breakout` option: let the expanded child cards **break out of the card's

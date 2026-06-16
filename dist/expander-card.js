@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.7.0";
+const VERSION = "0.8.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -285,9 +285,9 @@ const EDITOR_SCHEMA = [
       select: {
         mode: "dropdown",
         options: [
-          { value: "header", label: "Header (tap the header card)" },
-          { value: "chevron", label: "Chevron (tap the arrow)" },
-          { value: "both", label: "Both" },
+          { value: "header", label: "Header only — tap the card, no chevron" },
+          { value: "chevron", label: "Chevron only — tap the arrow" },
+          { value: "both", label: "Both (header + chevron)" },
         ],
       },
     },
@@ -349,6 +349,32 @@ class ExpanderCardEditor extends HTMLElement {
       ...config,
     };
     this._render();
+    this._ensureNativeEditors();
+  }
+
+  // The hui-card-element-editor / hui-card-picker elements are lazy-loaded by
+  // HA. Force their import (via a built-in stack's editor) so the children get a
+  // real stack-like GUI (add / remove / pick type) instead of the YAML fallback.
+  async _ensureNativeEditors() {
+    const need = ["hui-card-element-editor", "hui-card-picker"];
+    if (need.every((n) => customElements.get(n))) return;
+    try {
+      const helpers = await window.loadCardHelpers();
+      const stack = helpers.createCardElement({ type: "vertical-stack", cards: [] });
+      const ctor = stack && stack.constructor;
+      if (ctor && ctor.getConfigElement) await ctor.getConfigElement();
+    } catch (e) {
+      /* ignore — we keep the YAML fallback */
+    }
+    await Promise.race([
+      Promise.all(need.map((n) => customElements.whenDefined(n))),
+      new Promise((r) => setTimeout(r, 2000)),
+    ]);
+    if (customElements.get("hui-card-element-editor") && !this._upgraded) {
+      this._upgraded = true;
+      this._rendered = false;
+      this._render(); // re-render now that native editors exist
+    }
   }
 
   set hass(hass) {
@@ -582,19 +608,33 @@ class ExpanderCardEditor extends HTMLElement {
       this._cardsContainer.appendChild(row);
     });
 
-    // Card picker to add a new child card.
-    const picker = document.createElement("hui-card-picker");
-    picker.hass = this._hass;
-    picker.lovelace = this._lovelace;
-    picker.addEventListener("config-changed", (ev) => {
-      ev.stopPropagation();
-      const next = [...(this._config.cards || []), ev.detail.config];
-      this._config = { ...this._config, cards: next };
-      this._emit();
-      this._renderCardsList();
-    });
-    this._picker = picker;
-    this._cardsContainer.appendChild(picker);
+    // Card picker to add a new child card (just like the stack card editor).
+    if (customElements.get("hui-card-picker")) {
+      const picker = document.createElement("hui-card-picker");
+      picker.hass = this._hass;
+      picker.lovelace = this._lovelace;
+      picker.addEventListener("config-changed", (ev) => {
+        ev.stopPropagation();
+        const next = [...(this._config.cards || []), ev.detail.config];
+        this._config = { ...this._config, cards: next };
+        this._emit();
+        this._renderCardsList();
+      });
+      this._picker = picker;
+      this._cardsContainer.appendChild(picker);
+    } else {
+      // Fallback: a simple button that appends a new card to edit.
+      const add = document.createElement("mwc-button");
+      add.setAttribute("raised", "");
+      add.textContent = "Add card";
+      add.addEventListener("click", () => {
+        const next = [...(this._config.cards || []), { type: "entities", entities: [] }];
+        this._config = { ...this._config, cards: next };
+        this._emit();
+        this._renderCardsList();
+      });
+      this._cardsContainer.appendChild(add);
+    }
   }
 
   _moveCard(index, delta) {
