@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.4.0";
+const VERSION = "0.5.0";
 
 class ExpanderCard extends HTMLElement {
   constructor() {
@@ -27,6 +27,7 @@ class ExpanderCard extends HTMLElement {
       "storage-id": null,
       gap: 8,
       "child-layout": "vertical",
+      columns: 0,
       ...config,
     };
     let initial = !!this._config.expanded;
@@ -117,6 +118,8 @@ class ExpanderCard extends HTMLElement {
       }
       .children-inner.horizontal { flex-direction: row; flex-wrap: wrap; align-items: stretch; }
       .children-inner.horizontal > * { flex: 1 1 0; min-width: 0; }
+      .children-inner.grid { display: grid; }
+      .children-inner.grid > * { min-width: 0; }
       @supports not (grid-template-rows: 1fr) {
         .children { display: block; max-height: 0; transition: max-height 0.3s ease; }
         .children.open { max-height: 1500px; }
@@ -163,8 +166,16 @@ class ExpanderCard extends HTMLElement {
     const children = document.createElement("div");
     children.className = "children" + (this._expanded ? " open" : "");
     const horizontal = this._config["child-layout"] === "horizontal";
+    const columns = parseInt(this._config.columns, 10) || 0;
     const inner = document.createElement("div");
-    inner.className = "children-inner" + (horizontal ? " horizontal" : "");
+    inner.className = "children-inner";
+    if (columns >= 1) {
+      // Explicit column count wins: arrange children in an N-column grid.
+      inner.classList.add("grid");
+      inner.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
+    } else if (horizontal) {
+      inner.classList.add("horizontal");
+    }
     this._childEls = [];
     for (const childConfig of this._config.cards) {
       const el = await this._createCardElement(childConfig);
@@ -244,6 +255,7 @@ const EDITOR_SCHEMA = [
       },
     },
   },
+  { name: "columns", selector: { number: { min: 0, max: 12, mode: "box" } } },
   { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "expanded", selector: { boolean: {} } },
   { name: "remember", selector: { boolean: {} } },
@@ -253,6 +265,7 @@ const EDITOR_SCHEMA = [
 const EDITOR_LABELS = {
   "expand-on": "Expand on",
   "child-layout": "Child cards layout",
+  columns: "Columns (0 = auto)",
   gap: "Gap between child cards",
   expanded: "Start expanded",
   remember: "Remember open/closed state",
@@ -310,6 +323,7 @@ class ExpanderCardEditor extends HTMLElement {
     return {
       "expand-on": this._config["expand-on"],
       "child-layout": this._config["child-layout"] || "vertical",
+      columns: Number(this._config.columns) || 0,
       gap: Number(this._config.gap) || 0,
       expanded: !!this._config.expanded,
       remember: !!this._config.remember,
