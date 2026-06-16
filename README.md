@@ -109,9 +109,9 @@ cards:
 
 ### Notes
 
-- `expand-on: header` makes the whole header tappable. Interactive header
-  controls (switches, sliders, icon buttons, inputs…) keep working — tapping
-  them will **not** toggle the expander.
+- `expand-on: header` shows **no chevron** and expands when you tap the header
+  card itself. Interactive header controls (switches, sliders, icon buttons,
+  inputs…) keep working — tapping them will **not** toggle the expander.
 - `expand-on: chevron` shows a chevron on the right of the header; only the
   chevron toggles.
 - `expand-on: both` does both (header tap **and** chevron).
