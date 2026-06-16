@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.15.0
+
+- New `group` option (accordion): give several expander cards the same group
+  name and opening one **automatically closes the others** in that group — so
+  two full-width (`breakout`) cards never overlap.
+
 ## v0.14.1
 
 - Fix: with `breakout`, the expanded full-width children could be overlapped by

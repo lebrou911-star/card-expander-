@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.14.1";
+const VERSION = "0.15.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -30,6 +30,13 @@ class ExpanderCard extends HTMLElement {
     this._childEls = [];
     this._built = false;
     this._onResize = () => this._applyBreakout();
+    // Accordion: close this card when another card in the same group opens.
+    this._onGroupOpen = (ev) => {
+      const group = this._config && this._config.group;
+      if (!group || !ev.detail) return;
+      if (ev.detail.group !== group || ev.detail.source === this) return;
+      if (this._expanded) this._setExpanded(false);
+    };
   }
 
   setConfig(config) {
@@ -43,6 +50,7 @@ class ExpanderCard extends HTMLElement {
       "header-width": 0,
       breakout: false,
       "breakout-margin": 8,
+      group: "",
       ...config,
     };
     if (!Array.isArray(this._config.cards)) this._config.cards = [];
@@ -261,22 +269,36 @@ class ExpanderCard extends HTMLElement {
     this._childrenEl.style.zIndex = "6";
   }
 
-  _toggle() {
-    this._expanded = !this._expanded;
-    if (this._childrenEl) this._childrenEl.classList.toggle("open", this._expanded);
-    if (this._chevronEl) this._chevronEl.classList.toggle("open", this._expanded);
+  _setExpanded(state) {
+    this._expanded = state;
+    if (this._childrenEl) this._childrenEl.classList.toggle("open", state);
+    if (this._chevronEl) this._chevronEl.classList.toggle("open", state);
     requestAnimationFrame(() => this._applyBreakout());
     this.dispatchEvent(new Event("iron-resize", { bubbles: true, composed: true }));
+  }
+
+  _toggle() {
+    this._setExpanded(!this._expanded);
+    if (this._expanded && this._config.group) {
+      // Tell other cards in the same group to close (accordion).
+      window.dispatchEvent(
+        new CustomEvent("expander-card:opened", {
+          detail: { group: this._config.group, source: this },
+        })
+      );
+    }
   }
 
   connectedCallback() {
     if (!this._built && this._config) this._build();
     window.addEventListener("resize", this._onResize);
+    window.addEventListener("expander-card:opened", this._onGroupOpen);
     requestAnimationFrame(() => this._applyBreakout());
   }
 
   disconnectedCallback() {
     window.removeEventListener("resize", this._onResize);
+    window.removeEventListener("expander-card:opened", this._onGroupOpen);
   }
 
   static getConfigElement() {
@@ -319,6 +341,7 @@ const EDITOR_SCHEMA = [
   { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "breakout", selector: { boolean: {} } },
   { name: "breakout-margin", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
+  { name: "group", selector: { text: {} } },
   { name: "expanded", selector: { boolean: {} } },
 ];
 
@@ -329,6 +352,7 @@ const EDITOR_LABELS = {
   gap: "Gap between child cards",
   breakout: "Full-width children (break out of the card)",
   "breakout-margin": "Break-out side margin",
+  group: "Accordion group (same name = only one open at a time)",
   expanded: "Start expanded",
 };
 
@@ -416,6 +440,7 @@ class ExpanderCardEditor extends HTMLElement {
       gap: Number(this._config.gap) || 0,
       breakout: !!this._config.breakout,
       "breakout-margin": Number(this._config["breakout-margin"]) || 0,
+      group: this._config.group || "",
       expanded: !!this._config.expanded,
     };
   }
