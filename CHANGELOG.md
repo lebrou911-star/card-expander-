@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.13.0
+
+- The **header** now has a card **picker** in the editor (like the child cards):
+  when no header is set you choose the card type from scratch, then edit it.
+- New cards start **blank**: `getStubConfig` no longer pre-fills a header or child
+  cards, so you build everything from scratch. The card tolerates an empty
+  header (shows a "Select a header card" placeholder until you pick one).
+
 ## v0.12.0
 
 - Removed the `remember` / `storage-id` options. The card simply starts from
