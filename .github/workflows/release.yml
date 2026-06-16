@@ -1,0 +1,53 @@
+name: Create Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version from expander-card.js
+        id: version
+        run: |
+          VERSION=$(sed -n 's/^const VERSION = "\(.*\)";/\1/p' dist/expander-card.js)
+          if [ -z "$VERSION" ]; then
+            echo "Could not determine VERSION from dist/expander-card.js" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build release notes from CHANGELOG
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if [ -f CHANGELOG.md ]; then
+            awk -v tag="## $TAG" '
+              $0 == tag {flag=1; next}
+              /^## / && flag {flag=0}
+              flag {print}
+            ' CHANGELOG.md > release_notes.md
+          fi
+          # Fall back to a generic note if no matching section was found
+          if [ ! -s release_notes.md ]; then
+            echo "Release $TAG" > release_notes.md
+          fi
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if gh release view "$TAG" &>/dev/null; then
+            gh release edit "$TAG" --notes-file release_notes.md
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes-file release_notes.md \
+              --latest
+          fi
