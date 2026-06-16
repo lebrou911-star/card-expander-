@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.14.0";
+const VERSION = "0.14.1";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -246,6 +246,8 @@ class ExpanderCard extends HTMLElement {
     if (!this._config || !this._config.breakout) {
       this._childrenEl.style.width = "";
       this._childrenEl.style.marginLeft = "";
+      this._childrenEl.style.position = "";
+      this._childrenEl.style.zIndex = "";
       return;
     }
     const margin = Number(this._config["breakout-margin"]) || 0;
@@ -253,6 +255,10 @@ class ExpanderCard extends HTMLElement {
     if (!rect.width) return;
     this._childrenEl.style.width = `calc(100vw - ${margin * 2}px)`;
     this._childrenEl.style.marginLeft = `${-(rect.left - margin)}px`;
+    // The broken-out children span the full width and can overlap neighbouring
+    // grid cards; lift them above so they always receive pointer events.
+    this._childrenEl.style.position = "relative";
+    this._childrenEl.style.zIndex = "6";
   }
 
   _toggle() {
