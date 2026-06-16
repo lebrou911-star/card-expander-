@@ -103,6 +103,7 @@ cards:
 | `header-width`| number / string | `0`      | Shrink only the header: `1`–`12` = that many of 12 columns, or a CSS value (`33%`, `200px`). `0` = full width. Children keep the full card width. |
 | `breakout`    | boolean         | `false`  | Let the expanded children span the **full viewport width**, breaking out of the card's grid cell. The header stays inline at its normal size. |
 | `breakout-margin` | number (px) | `8`      | Side margin used when `breakout` is on.                                                      |
+| `group`       | string          | `""`     | Accordion group: cards sharing the same group name auto-close each other (only one open at a time). |
 | `expanded`    | boolean         | `false`  | Whether the card starts open.                                                                |
 | `gap`         | number (px)     | `8`      | Vertical space (in pixels) between child cards.                                              |
 
