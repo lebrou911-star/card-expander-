@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0
+
+- The **header** and each **child card** now have a full graphical editor
+  (native `hui-card-element-editor`, with built-in GUI/YAML toggle).
+- Child cards can be **added** via a card picker, **reordered** (up/down) and
+  **deleted** directly in the visual editor.
+- Falls back to the YAML editor on older Home Assistant versions.
+
 ## v0.2.0
 
 - Added a **visual editor** (Home Assistant GUI): configure `expand-on`, `gap`,
