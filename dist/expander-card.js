@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.3.0";
+const VERSION = "0.4.0";
 
 class ExpanderCard extends HTMLElement {
   constructor() {
@@ -26,6 +26,7 @@ class ExpanderCard extends HTMLElement {
       remember: false,
       "storage-id": null,
       gap: 8,
+      "child-layout": "vertical",
       ...config,
     };
     let initial = !!this._config.expanded;
@@ -92,11 +93,14 @@ class ExpanderCard extends HTMLElement {
     style.textContent = `
       :host { display: block; }
       .wrapper { position: relative; }
-      .header-row { display: flex; align-items: stretch; position: relative; }
-      .header-card { flex: 1 1 auto; min-width: 0; }
+      .header-row { position: relative; }
+      .header-card { width: 100%; }
+      /* The chevron sits on top of the header card (absolute), so the header
+         card keeps the exact same size as any other card. */
       .chevron {
-        flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
-        width: 44px; cursor: pointer; color: var(--secondary-text-color);
+        position: absolute; right: 8px; top: 0; bottom: 0; z-index: 1;
+        display: flex; align-items: center; justify-content: center;
+        width: 36px; cursor: pointer; color: var(--secondary-text-color);
         transition: transform 0.3s ease;
       }
       .chevron.open { transform: rotate(180deg); }
@@ -111,6 +115,8 @@ class ExpanderCard extends HTMLElement {
         min-height: 0; overflow: hidden; display: flex; flex-direction: column;
         gap: ${gap}px; padding-top: ${gap}px;
       }
+      .children-inner.horizontal { flex-direction: row; flex-wrap: wrap; align-items: stretch; }
+      .children-inner.horizontal > * { flex: 1 1 0; min-width: 0; }
       @supports not (grid-template-rows: 1fr) {
         .children { display: block; max-height: 0; transition: max-height 0.3s ease; }
         .children.open { max-height: 1500px; }
@@ -156,8 +162,9 @@ class ExpanderCard extends HTMLElement {
 
     const children = document.createElement("div");
     children.className = "children" + (this._expanded ? " open" : "");
+    const horizontal = this._config["child-layout"] === "horizontal";
     const inner = document.createElement("div");
-    inner.className = "children-inner";
+    inner.className = "children-inner" + (horizontal ? " horizontal" : "");
     this._childEls = [];
     for (const childConfig of this._config.cards) {
       const el = await this._createCardElement(childConfig);
@@ -225,6 +232,18 @@ const EDITOR_SCHEMA = [
       },
     },
   },
+  {
+    name: "child-layout",
+    selector: {
+      select: {
+        mode: "dropdown",
+        options: [
+          { value: "vertical", label: "Vertical (stacked below)" },
+          { value: "horizontal", label: "Horizontal (side by side)" },
+        ],
+      },
+    },
+  },
   { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "expanded", selector: { boolean: {} } },
   { name: "remember", selector: { boolean: {} } },
@@ -233,6 +252,7 @@ const EDITOR_SCHEMA = [
 
 const EDITOR_LABELS = {
   "expand-on": "Expand on",
+  "child-layout": "Child cards layout",
   gap: "Gap between child cards",
   expanded: "Start expanded",
   remember: "Remember open/closed state",
@@ -257,6 +277,7 @@ class ExpanderCardEditor extends HTMLElement {
       remember: false,
       "storage-id": null,
       gap: 8,
+      "child-layout": "vertical",
       ...config,
     };
     this._render();
@@ -288,6 +309,7 @@ class ExpanderCardEditor extends HTMLElement {
   _formData() {
     return {
       "expand-on": this._config["expand-on"],
+      "child-layout": this._config["child-layout"] || "vertical",
       gap: Number(this._config.gap) || 0,
       expanded: !!this._config.expanded,
       remember: !!this._config.remember,

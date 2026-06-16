@@ -97,6 +97,7 @@ cards:
 | `header`      | card object     | —        | **Required.** Any Lovelace card config used as the always-visible header.                    |
 | `cards`       | list of cards   | —        | **Required.** The child cards revealed when expanded.                                        |
 | `expand-on`   | string          | `both`   | What toggles the card: `header`, `chevron`, or `both`.                                       |
+| `child-layout`| string          | `vertical` | How child cards are arranged: `vertical` (stacked below) or `horizontal` (side by side).   |
 | `expanded`    | boolean         | `false`  | Whether the card starts open.                                                                |
 | `remember`    | boolean         | `false`  | Remember the open/closed state in the browser's `localStorage`. Requires `storage-id`.       |
 | `storage-id`  | string          | `null`   | A unique id used as the storage key when `remember` is enabled. Give each card its own id.   |
@@ -110,6 +111,10 @@ cards:
 - `expand-on: chevron` shows a chevron on the right of the header; only the
   chevron toggles.
 - `expand-on: both` does both (header tap **and** chevron).
+- The chevron is drawn **on top of** the header card (top-right), so the header
+  card keeps the same width as any neighbouring card in a grid.
+- `child-layout: horizontal` lays the child cards out in a row (wrapping to new
+  rows as needed); `gap` then controls both horizontal and vertical spacing.
 - `remember` only persists if you also set a `storage-id`. The state is stored
   per-browser under the key `expander-card:<storage-id>`.
 

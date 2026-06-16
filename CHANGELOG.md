@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.4.0
+
+- The chevron now sits **on top of** the header card (overlay) instead of taking
+  its own column, so the header card keeps the **exact same size** as other cards
+  in a grid/row.
+- New `child-layout` option: `vertical` (stacked below, default) or
+  `horizontal` (child cards side by side, wrapping as needed). Also available in
+  the visual editor.
+
 ## v0.3.0
 
 - The **header** and each **child card** now have a full graphical editor
