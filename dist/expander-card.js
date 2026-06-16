@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "1.0.0";
+const VERSION = "0.1.1";
 
 class ExpanderCard extends HTMLElement {
   constructor() {
