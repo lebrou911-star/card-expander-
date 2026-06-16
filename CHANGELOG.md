@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.14.0
+
+- The header editor now has a **`{}` YAML toggle**: edit the header card as YAML,
+  including **from scratch when empty** (so you can paste/type a card without
+  using the picker). The visual editor and trash button remain.
+
 ## v0.13.1
 
 - Added a delete (trash) button on the header card in the editor — removing it
