@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.12.0
+
+- Removed the `remember` / `storage-id` options. The card simply starts from
+  `expanded` (closed by default) and opens on tap — no persisted state.
+
 ## v0.11.0
 
 - Removed the `force-header-toggle` option — the behaviour is now automatic:
