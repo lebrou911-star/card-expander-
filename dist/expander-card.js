@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.12.0";
+const VERSION = "0.13.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -34,10 +34,6 @@ class ExpanderCard extends HTMLElement {
 
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
-    if (!config.header) throw new Error("You need to define a 'header' card");
-    if (!config.cards || !Array.isArray(config.cards)) {
-      throw new Error("You need to define a 'cards' list (the children)");
-    }
     this._config = {
       "expand-on": "both",
       expanded: false,
@@ -49,6 +45,7 @@ class ExpanderCard extends HTMLElement {
       "breakout-margin": 8,
       ...config,
     };
+    if (!Array.isArray(this._config.cards)) this._config.cards = [];
     this._expanded = !!this._config.expanded;
     this._built = false;
     if (this.shadowRoot) this._build();
@@ -144,7 +141,11 @@ class ExpanderCard extends HTMLElement {
     const headerRow = document.createElement("div");
     headerRow.className = "header-row";
 
-    this._headerEl = await this._createCardElement(this._config.header);
+    const headerConfig = this._config.header;
+    this._headerEl =
+      headerConfig && headerConfig.type
+        ? await this._createCardElement(headerConfig)
+        : null;
     const headerHolder = document.createElement("div");
     headerHolder.className = "header-card";
     const headerWidth = resolveHeaderWidth(this._config["header-width"]);
@@ -170,7 +171,14 @@ class ExpanderCard extends HTMLElement {
         this._toggle();
       });
     }
-    headerHolder.appendChild(this._headerEl);
+    if (this._headerEl) {
+      headerHolder.appendChild(this._headerEl);
+    } else {
+      const ph = document.createElement("div");
+      ph.textContent = "Select a header card";
+      ph.style.cssText = "padding: 16px; opacity: 0.6;";
+      headerHolder.appendChild(ph);
+    }
 
     if (showChevron) {
       const chevron = document.createElement("div");
@@ -270,14 +278,12 @@ class ExpanderCard extends HTMLElement {
   }
 
   static getStubConfig() {
+    // Start blank: pick the header card and add child cards from scratch.
     return {
       "expand-on": "both",
       expanded: false,
-      header: { type: "markdown", content: "## Header (tap to expand)" },
-      cards: [
-        { type: "markdown", content: "Child card 1" },
-        { type: "markdown", content: "Child card 2" },
-      ],
+      header: {},
+      cards: [],
     };
   }
 }
@@ -517,13 +523,11 @@ class ExpanderCardEditor extends HTMLElement {
     root.appendChild(form);
 
     root.appendChild(
-      this._section("Header card", "The always-visible card. Tap to expand.")
+      this._section("Header card", "Pick a card, then edit it — the always-visible part.")
     );
-    this._headerEd = this._makeCardEditor(this._config.header || {}, (v) => {
-      this._config = { ...this._config, header: v };
-      this._emit();
-    });
-    root.appendChild(this._headerEd);
+    this._headerContainer = document.createElement("div");
+    root.appendChild(this._headerContainer);
+    this._renderHeaderEditor();
 
     root.appendChild(
       this._section("Child cards", "Cards revealed when the header is expanded.")
@@ -537,6 +541,39 @@ class ExpanderCardEditor extends HTMLElement {
 
     this.appendChild(root);
     this._rendered = true;
+  }
+
+  _renderHeaderEditor() {
+    const c = this._headerContainer;
+    c.innerHTML = "";
+    const h = this._config.header;
+    if (h && h.type) {
+      // A card is chosen: show its editor (GUI/YAML toggle).
+      this._headerEd = this._makeCardEditor(h, (v) => {
+        this._config = { ...this._config, header: v };
+        this._emit();
+      });
+      c.appendChild(this._headerEd);
+    } else if (customElements.get("hui-card-picker")) {
+      // No header yet: show the card picker, just like adding a child.
+      const picker = document.createElement("hui-card-picker");
+      picker.hass = this._hass;
+      picker.lovelace = this._lovelace;
+      picker.addEventListener("config-changed", (ev) => {
+        ev.stopPropagation();
+        this._config = { ...this._config, header: ev.detail.config };
+        this._emit();
+        this._renderHeaderEditor();
+      });
+      this._headerEd = picker;
+      c.appendChild(picker);
+    } else {
+      this._headerEd = this._makeObjectEditor(this._config.header || {}, (v) => {
+        this._config = { ...this._config, header: v };
+        this._emit();
+      });
+      c.appendChild(this._headerEd);
+    }
   }
 
   _renderCardsList() {
