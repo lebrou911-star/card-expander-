@@ -60,10 +60,13 @@ Browsers cache Lovelace resources aggressively. After installing or updating:
 
 ## Usage
 
-The card has **no visual editor** — configure it in YAML.
+The card ships with a **visual editor**. Edit your dashboard → **Add Card** →
+find **Expander Card** in the picker (with a live preview). The GUI lets you set
+`expand-on`, `gap`, `expanded`, `remember` and `storage-id` with form controls,
+and edit the `header` and child `cards` as YAML.
 
-Edit your dashboard → **Add Card** → scroll to the bottom → **Manual**, then
-paste a YAML config. Minimal example:
+You can also configure it purely in YAML (**Add Card → Manual**). Minimal
+example:
 
 ```yaml
 type: custom:expander-card

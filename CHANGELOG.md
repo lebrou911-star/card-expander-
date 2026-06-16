@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.0
+
+- Added a **visual editor** (Home Assistant GUI): configure `expand-on`, `gap`,
+  `expanded`, `remember` and `storage-id` with form controls, and edit the
+  `header` / `cards` as YAML (via the native `ha-yaml-editor`, with a JSON
+  textarea fallback).
+- The card now shows a live **preview** in the "Add card" picker.
+
 ## v0.1.1
 
 - Initial release of Expander Card.
