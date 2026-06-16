@@ -66,8 +66,10 @@ The card ships with a full **visual editor**. Edit your dashboard → **Add Card
 - set `expand-on`, `gap`, `expanded`, `remember` and `storage-id` with form
   controls;
 - edit the **header card** with its own graphical editor (GUI/YAML toggle);
-- **add** child cards via the card picker, edit each one graphically, and
-  **reorder** or **delete** them.
+- edit the **child cards** with Home Assistant's native stack-card editor —
+  numbered tabs, **add (+)**, move, **duplicate**, **cut**, delete, and a
+  **"Stack horizontally"** toggle (vertical/horizontal), just like a built-in
+  stack card.
 
 (On older Home Assistant versions, `header`/`cards` fall back to a YAML editor.)
 
