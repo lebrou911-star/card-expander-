@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.7.0
+
+- New `breakout` option: let the expanded child cards **break out of the card's
+  grid cell and span the full viewport width**, while the header stays inline at
+  its normal size (so neighbouring cards on the header's row are not pushed
+  away). Combine with `columns` to get a compact inline header that opens into a
+  wide, multi-column panel. `breakout-margin` sets the side margin (px).
+- The break-out width is measured per card, so it works even when the card is
+  not centered, and it re-measures on window resize.
+
 ## v0.6.0
 
 - New `header-width` option: shrink the **header** to a fraction of the card
