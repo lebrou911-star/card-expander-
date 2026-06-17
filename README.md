@@ -103,6 +103,7 @@ cards:
 | `header-width`| number / string | `0`      | Shrink only the header: `1`–`12` = that many of 12 columns, or a CSS value (`33%`, `200px`). `0` = full width. Children keep the full card width. |
 | `breakout`    | boolean         | `false`  | Let the expanded children span the **full viewport width**, breaking out of the card's grid cell. The header stays inline at its normal size. |
 | `breakout-margin` | number (px) | `8`      | Side margin used when `breakout` is on.                                                      |
+| `drop`        | number (px)     | `0`      | Float the expanded panel this many px **below** the header (cards above stay in place; the panel overlays the area below). Tune to the height of the row(s) to clear. |
 | `group`       | string          | `""`     | Accordion group: cards sharing the same group name auto-close each other (only one open at a time). |
 | `border-color`| string          | `""`     | CSS color of an outline drawn around the header **while expanded** (e.g. `red`, `#ff9800`, `var(--primary-color)`). |
 | `expanded`    | boolean         | `false`  | Whether the card starts open.                                                                |

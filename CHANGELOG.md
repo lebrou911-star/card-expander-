@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.17.0
+
+- New `drop` option (px): floats the expanded panel that many pixels **below** the
+  header instead of inserting it right under it. The cards next to / below the
+  header stay in place (useful to keep a row of buttons grouped at the top). The
+  panel floats over the area below, so set `drop` to roughly the height of the
+  row(s) to clear. Combine with `breakout` for full width.
+
 ## v0.16.0
 
 - New `border-color` option: draws a colored outline around the **header** while
