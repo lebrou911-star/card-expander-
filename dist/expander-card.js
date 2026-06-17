@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.16.0";
+const VERSION = "0.17.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -52,6 +52,7 @@ class ExpanderCard extends HTMLElement {
       "breakout-margin": 8,
       group: "",
       "border-color": "",
+      drop: 0,
       ...config,
     };
     if (!Array.isArray(this._config.cards)) this._config.cards = [];
@@ -261,23 +262,46 @@ class ExpanderCard extends HTMLElement {
   // Let the expanded children break out of the card's grid cell and span the
   // full viewport width, while the header stays inline at its normal width.
   _applyBreakout() {
-    if (!this._childrenEl) return;
-    if (!this._config || !this._config.breakout) {
-      this._childrenEl.style.width = "";
-      this._childrenEl.style.marginLeft = "";
-      this._childrenEl.style.position = "";
-      this._childrenEl.style.zIndex = "";
-      return;
-    }
-    const margin = Number(this._config["breakout-margin"]) || 0;
+    const el = this._childrenEl;
+    if (!el) return;
+    // Reset
+    el.style.width = "";
+    el.style.marginLeft = "";
+    el.style.position = "";
+    el.style.zIndex = "";
+    el.style.top = "";
+    el.style.left = "";
+
+    const breakout = !!(this._config && this._config.breakout);
+    const drop = Number(this._config && this._config.drop) || 0;
+    if (!breakout && drop <= 0) return;
+
     const rect = this.getBoundingClientRect();
     if (!rect.width) return;
-    this._childrenEl.style.width = `calc(100vw - ${margin * 2}px)`;
-    this._childrenEl.style.marginLeft = `${-(rect.left - margin)}px`;
-    // The broken-out children span the full width and can overlap neighbouring
-    // grid cards; lift them above so they always receive pointer events.
-    this._childrenEl.style.position = "relative";
-    this._childrenEl.style.zIndex = "6";
+    const margin = Number(this._config["breakout-margin"]) || 0;
+
+    if (drop > 0) {
+      // Float the expanded panel `drop` px below the header so the cards next to
+      // / below the header stay in place (the panel overlays the area below).
+      el.style.position = "absolute";
+      el.style.top = `calc(100% + ${drop}px)`;
+      el.style.zIndex = "6";
+      if (breakout) {
+        el.style.left = `${-(rect.left - margin)}px`;
+        el.style.width = `calc(100vw - ${margin * 2}px)`;
+      } else {
+        el.style.left = "0";
+        el.style.width = "100%";
+      }
+      return;
+    }
+
+    // Breakout (in-flow): span the full viewport width, pushing content below.
+    // Lift above neighbouring grid cards so taps always reach the children.
+    el.style.width = `calc(100vw - ${margin * 2}px)`;
+    el.style.marginLeft = `${-(rect.left - margin)}px`;
+    el.style.position = "relative";
+    el.style.zIndex = "6";
   }
 
   _setExpanded(state) {
@@ -353,6 +377,7 @@ const EDITOR_SCHEMA = [
   { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "breakout", selector: { boolean: {} } },
   { name: "breakout-margin", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
+  { name: "drop", selector: { number: { min: 0, max: 600, mode: "box", unit_of_measurement: "px" } } },
   { name: "group", selector: { text: {} } },
   { name: "border-color", selector: { text: {} } },
   { name: "expanded", selector: { boolean: {} } },
@@ -365,6 +390,7 @@ const EDITOR_LABELS = {
   gap: "Gap between child cards",
   breakout: "Full-width children (break out of the card)",
   "breakout-margin": "Break-out side margin",
+  drop: "Drop the panel down (px, floats; keeps cards above in place)",
   group: "Accordion group (same name = only one open at a time)",
   "border-color": "Header border color when expanded (e.g. red, #ff9800)",
   expanded: "Start expanded",
@@ -454,6 +480,7 @@ class ExpanderCardEditor extends HTMLElement {
       gap: Number(this._config.gap) || 0,
       breakout: !!this._config.breakout,
       "breakout-margin": Number(this._config["breakout-margin"]) || 0,
+      drop: Number(this._config.drop) || 0,
       group: this._config.group || "",
       "border-color": this._config["border-color"] || "",
       expanded: !!this._config.expanded,
