@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.15.0";
+const VERSION = "0.16.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -51,6 +51,7 @@ class ExpanderCard extends HTMLElement {
       breakout: false,
       "breakout-margin": 8,
       group: "",
+      "border-color": "",
       ...config,
     };
     if (!Array.isArray(this._config.cards)) this._config.cards = [];
@@ -108,7 +109,7 @@ class ExpanderCard extends HTMLElement {
       :host { display: block; }
       .wrapper { position: relative; }
       .header-row { position: relative; }
-      .header-card { position: relative; width: 100%; }
+      .header-card { position: relative; width: 100%; border-radius: var(--ha-card-border-radius, 12px); transition: box-shadow 0.25s ease; }
       /* The chevron sits on top of the header card (absolute), so the header
          card keeps the exact same size as any other card. */
       .chevron {
@@ -156,6 +157,7 @@ class ExpanderCard extends HTMLElement {
         : null;
     const headerHolder = document.createElement("div");
     headerHolder.className = "header-card";
+    this._headerHolderEl = headerHolder;
     const headerWidth = resolveHeaderWidth(this._config["header-width"]);
     if (headerWidth) headerHolder.style.maxWidth = headerWidth;
     // Behaviour (automatic, no option):
@@ -245,6 +247,15 @@ class ExpanderCard extends HTMLElement {
     this.shadowRoot.appendChild(style);
     this.shadowRoot.appendChild(wrapper);
     requestAnimationFrame(() => this._applyBreakout());
+    this._applyHeaderBorder();
+  }
+
+  // Outline the header with `border-color` while the card is expanded.
+  _applyHeaderBorder() {
+    if (!this._headerHolderEl) return;
+    const col = this._config && this._config["border-color"];
+    this._headerHolderEl.style.boxShadow =
+      this._expanded && col ? `0 0 0 2px ${col}` : "";
   }
 
   // Let the expanded children break out of the card's grid cell and span the
@@ -273,6 +284,7 @@ class ExpanderCard extends HTMLElement {
     this._expanded = state;
     if (this._childrenEl) this._childrenEl.classList.toggle("open", state);
     if (this._chevronEl) this._chevronEl.classList.toggle("open", state);
+    this._applyHeaderBorder();
     requestAnimationFrame(() => this._applyBreakout());
     this.dispatchEvent(new Event("iron-resize", { bubbles: true, composed: true }));
   }
@@ -342,6 +354,7 @@ const EDITOR_SCHEMA = [
   { name: "breakout", selector: { boolean: {} } },
   { name: "breakout-margin", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "group", selector: { text: {} } },
+  { name: "border-color", selector: { text: {} } },
   { name: "expanded", selector: { boolean: {} } },
 ];
 
@@ -353,6 +366,7 @@ const EDITOR_LABELS = {
   breakout: "Full-width children (break out of the card)",
   "breakout-margin": "Break-out side margin",
   group: "Accordion group (same name = only one open at a time)",
+  "border-color": "Header border color when expanded (e.g. red, #ff9800)",
   expanded: "Start expanded",
 };
 
@@ -441,6 +455,7 @@ class ExpanderCardEditor extends HTMLElement {
       breakout: !!this._config.breakout,
       "breakout-margin": Number(this._config["breakout-margin"]) || 0,
       group: this._config.group || "",
+      "border-color": this._config["border-color"] || "",
       expanded: !!this._config.expanded,
     };
   }

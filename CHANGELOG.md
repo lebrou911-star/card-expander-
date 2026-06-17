@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.16.0
+
+- New `border-color` option: draws a colored outline around the **header** while
+  the card is **expanded** (and removes it when collapsed). Accepts any CSS color
+  (e.g. `red`, `#ff9800`, `var(--primary-color)`). Uses a box-shadow ring so it
+  doesn't shift the layout.
+
 ## v0.15.0
 
 - New `group` option (accordion): give several expander cards the same group
