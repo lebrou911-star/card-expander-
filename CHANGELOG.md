@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.18.0
+
+- `breakout` is now **centered** and uses the live viewport width (no horizontal
+  scrollbar overflow). New `breakout-max` option (px) caps the broken-out width —
+  set it on desktop so the panel matches your centered dashboard column instead
+  of spanning the whole screen; `0` (default) keeps full width (great on mobile).
+
 ## v0.17.0
 
 - New `drop` option (px): floats the expanded panel that many pixels **below** the
