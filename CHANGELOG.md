@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.19.0
+
+- `breakout` now **auto-matches the content column** the card sits in: it measures
+  the section/view container, so it's full width on mobile but lines up with the
+  centered dashboard column on desktop — no manual tuning. Falls back to the
+  viewport width if the container can't be found. `breakout-max` still works as an
+  optional extra cap.
+
 ## v0.18.0
 
 - `breakout` is now **centered** and uses the live viewport width (no horizontal

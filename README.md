@@ -101,9 +101,9 @@ cards:
 | `child-layout`| string          | `vertical` | How child cards are arranged: `vertical` (stacked below) or `horizontal` (side by side).   |
 | `columns`     | number          | `0`      | Arrange child cards in a grid of N columns (1–12). `0` = auto (follows `child-layout`). Wins over `child-layout` when ≥ 1. |
 | `header-width`| number / string | `0`      | Shrink only the header: `1`–`12` = that many of 12 columns, or a CSS value (`33%`, `200px`). `0` = full width. Children keep the full card width. |
-| `breakout`    | boolean         | `false`  | Let the expanded children span the **full viewport width**, breaking out of the card's grid cell. The header stays inline at its normal size. |
-| `breakout-margin` | number (px) | `8`      | Side margin used when `breakout` is on.                                                      |
-| `breakout-max`| number (px)     | `0`      | Max width of the broken-out panel (centered). `0` = full viewport width. Set it on desktop so the panel matches your centered dashboard column. |
+| `breakout`    | boolean         | `false`  | Let the expanded children break out of the card's grid cell and span the **content column** (auto-detected: full width on mobile, the centered column on desktop). The header stays inline at its normal size. |
+| `breakout-margin` | number (px) | `8`      | Side margin used when `breakout` falls back to the viewport width.                           |
+| `breakout-max`| number (px)     | `0`      | Optional extra cap on the broken-out width (centered). `0` = use the full content column.    |
 | `drop`        | number (px)     | `0`      | Float the expanded panel this many px **below** the header (cards above stay in place; the panel overlays the area below). Tune to the height of the row(s) to clear. |
 | `group`       | string          | `""`     | Accordion group: cards sharing the same group name auto-close each other (only one open at a time). |
 | `border-color`| string          | `""`     | CSS color of an outline drawn around the header **while expanded** (e.g. `red`, `#ff9800`, `var(--primary-color)`). |
