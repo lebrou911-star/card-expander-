@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.18.0";
+const VERSION = "0.19.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -260,9 +260,39 @@ class ExpanderCard extends HTMLElement {
       this._expanded && col ? `0 0 0 2px ${col}` : "";
   }
 
-  // Let the expanded children break out of the card's grid cell. By default they
-  // span the viewport width; `breakout-max` caps the width and the panel is
-  // centered (so on desktop it matches the centered dashboard column).
+  // Find the content column the card sits in (the section / view container), so
+  // breakout can match it — full width on mobile, the centered column on desktop.
+  _contentRect() {
+    const cParent = (n) => {
+      if (n.assignedSlot) return n.assignedSlot;
+      const p = n.parentNode;
+      if (!p) return null;
+      if (p.nodeType === 11) return p.host || null; // ShadowRoot
+      return p;
+    };
+    try {
+      let node = this;
+      let guard = 0;
+      while (node && guard++ < 40) {
+        const tag = node.tagName;
+        if (tag === "HUI-SECTION") {
+          const inner = node.shadowRoot && node.shadowRoot.querySelector(".container");
+          return (inner || node).getBoundingClientRect();
+        }
+        if (tag === "HUI-MASONRY-VIEW" || tag === "HUI-VIEW" || tag === "HUI-PANEL-VIEW") {
+          return node.getBoundingClientRect();
+        }
+        node = cParent(node);
+      }
+    } catch (e) {
+      /* fall back to viewport */
+    }
+    return null;
+  }
+
+  // Let the expanded children break out of the card's grid cell. They match the
+  // content column width by default (full width on mobile, the centered column on
+  // desktop); `breakout-max` optionally caps it further.
   _applyBreakout() {
     const el = this._childrenEl;
     if (!el) return;
@@ -285,11 +315,22 @@ class ExpanderCard extends HTMLElement {
     // Compute target width + viewport-left.
     let width, leftViewport;
     if (breakout) {
-      const vw = document.documentElement.clientWidth || window.innerWidth;
+      const cr = this._contentRect();
+      if (cr && cr.width) {
+        // Match the content column (aligns with the other cards).
+        width = cr.width;
+        leftViewport = cr.left;
+      } else {
+        // Fallback: viewport width minus margins.
+        const vw = document.documentElement.clientWidth || window.innerWidth;
+        width = vw - margin * 2;
+        leftViewport = (vw - width) / 2;
+      }
       const maxW = Number(this._config["breakout-max"]) || 0;
-      width = vw - margin * 2;
-      if (maxW > 0 && maxW < width) width = maxW;
-      leftViewport = (vw - width) / 2; // centered on the viewport
+      if (maxW > 0 && maxW < width) {
+        leftViewport += (width - maxW) / 2; // keep centered within the column
+        width = maxW;
+      }
     } else {
       width = rect.width; // drop only: keep the card width
       leftViewport = rect.left;
