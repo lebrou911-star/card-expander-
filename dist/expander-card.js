@@ -2,7 +2,7 @@
  * Expander Card — header card that slides open to reveal child cards.
  * License: MIT
  */
-const VERSION = "0.17.0";
+const VERSION = "0.18.0";
 
 // Resolve a header-width value into a CSS max-width.
 // 1..12 -> fraction of 12 columns; a bare number -> px; a CSS string used as-is.
@@ -50,6 +50,7 @@ class ExpanderCard extends HTMLElement {
       "header-width": 0,
       breakout: false,
       "breakout-margin": 8,
+      "breakout-max": 0,
       group: "",
       "border-color": "",
       drop: 0,
@@ -259,8 +260,9 @@ class ExpanderCard extends HTMLElement {
       this._expanded && col ? `0 0 0 2px ${col}` : "";
   }
 
-  // Let the expanded children break out of the card's grid cell and span the
-  // full viewport width, while the header stays inline at its normal width.
+  // Let the expanded children break out of the card's grid cell. By default they
+  // span the viewport width; `breakout-max` caps the width and the panel is
+  // centered (so on desktop it matches the centered dashboard column).
   _applyBreakout() {
     const el = this._childrenEl;
     if (!el) return;
@@ -280,26 +282,33 @@ class ExpanderCard extends HTMLElement {
     if (!rect.width) return;
     const margin = Number(this._config["breakout-margin"]) || 0;
 
+    // Compute target width + viewport-left.
+    let width, leftViewport;
+    if (breakout) {
+      const vw = document.documentElement.clientWidth || window.innerWidth;
+      const maxW = Number(this._config["breakout-max"]) || 0;
+      width = vw - margin * 2;
+      if (maxW > 0 && maxW < width) width = maxW;
+      leftViewport = (vw - width) / 2; // centered on the viewport
+    } else {
+      width = rect.width; // drop only: keep the card width
+      leftViewport = rect.left;
+    }
+
     if (drop > 0) {
-      // Float the expanded panel `drop` px below the header so the cards next to
-      // / below the header stay in place (the panel overlays the area below).
+      // Float the panel `drop` px below the header so cards next to / below the
+      // header stay in place (the panel overlays the area below).
       el.style.position = "absolute";
       el.style.top = `calc(100% + ${drop}px)`;
       el.style.zIndex = "6";
-      if (breakout) {
-        el.style.left = `${-(rect.left - margin)}px`;
-        el.style.width = `calc(100vw - ${margin * 2}px)`;
-      } else {
-        el.style.left = "0";
-        el.style.width = "100%";
-      }
+      el.style.left = `${leftViewport - rect.left}px`;
+      el.style.width = `${width}px`;
       return;
     }
 
-    // Breakout (in-flow): span the full viewport width, pushing content below.
-    // Lift above neighbouring grid cards so taps always reach the children.
-    el.style.width = `calc(100vw - ${margin * 2}px)`;
-    el.style.marginLeft = `${-(rect.left - margin)}px`;
+    // In-flow: push content below; lift above neighbours so taps reach children.
+    el.style.width = `${width}px`;
+    el.style.marginLeft = `${leftViewport - rect.left}px`;
     el.style.position = "relative";
     el.style.zIndex = "6";
   }
@@ -377,6 +386,7 @@ const EDITOR_SCHEMA = [
   { name: "gap", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
   { name: "breakout", selector: { boolean: {} } },
   { name: "breakout-margin", selector: { number: { min: 0, max: 64, mode: "box", unit_of_measurement: "px" } } },
+  { name: "breakout-max", selector: { number: { min: 0, max: 2000, mode: "box", unit_of_measurement: "px" } } },
   { name: "drop", selector: { number: { min: 0, max: 600, mode: "box", unit_of_measurement: "px" } } },
   { name: "group", selector: { text: {} } },
   { name: "border-color", selector: { text: {} } },
@@ -390,6 +400,7 @@ const EDITOR_LABELS = {
   gap: "Gap between child cards",
   breakout: "Full-width children (break out of the card)",
   "breakout-margin": "Break-out side margin",
+  "breakout-max": "Break-out max width (px, 0 = full; centered — use on desktop)",
   drop: "Drop the panel down (px, floats; keeps cards above in place)",
   group: "Accordion group (same name = only one open at a time)",
   "border-color": "Header border color when expanded (e.g. red, #ff9800)",
@@ -480,6 +491,7 @@ class ExpanderCardEditor extends HTMLElement {
       gap: Number(this._config.gap) || 0,
       breakout: !!this._config.breakout,
       "breakout-margin": Number(this._config["breakout-margin"]) || 0,
+      "breakout-max": Number(this._config["breakout-max"]) || 0,
       drop: Number(this._config.drop) || 0,
       group: this._config.group || "",
       "border-color": this._config["border-color"] || "",
